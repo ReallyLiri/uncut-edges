@@ -8,8 +8,16 @@ import (
 	"github.com/reallyliri/penn-scans-parser/core"
 )
 
+var port string
+
+func init() {
+	port = os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+}
+
 const (
-	port  = 8080
 	usage = `Usage: go run main.go <serve/parse> <CatalogID>`
 )
 
@@ -43,6 +51,7 @@ func main() {
 
 func serve() {
 	http.HandleFunc(parseEndpoint, parseCatalogHandler)
-	fmt.Printf("Server is listening on port %d...\n", port)
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+
+	fmt.Printf("Server is listening on port %s...\n", port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 }
