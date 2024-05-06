@@ -15,3 +15,15 @@ type Sequence struct {
 type Manifest struct {
 	Sequences []Sequence `json:"sequences"`
 }
+
+type Property struct {
+	Key   string
+	Value string
+}
+
+type Header struct {
+	CatalogID  string
+	Title      string
+	Properties []Property
+	Links      []string
+}

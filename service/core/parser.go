@@ -9,13 +9,17 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/jung-kurt/gofpdf"
 	pdfcpu "github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
 func Parse(catalogID string) (string, error) {
 	fmt.Println("Catalog ID:", catalogID)
+	outFile := fmt.Sprintf("%s.pdf", catalogID)
 
-	resp, err := http.Get("https://colenda.library.upenn.edu/phalt/iiif/2/" + catalogID + "/manifest")
+	headerCh := writeHeader(catalogID, outFile)
+
+	resp, err := http.Get(fmt.Sprintf(manifestUrlFmt, catalogID))
 	if err != nil {
 		return "", fmt.Errorf("error getting manifest: %w", err)
 	}
@@ -40,7 +44,11 @@ func Parse(catalogID string) (string, error) {
 		return "", fmt.Errorf("error downloading images: %w", err)
 	}
 
-	outFile := fmt.Sprintf("%s.pdf", catalogID)
+	err = <-headerCh
+	if err != nil {
+		return "", err
+	}
+
 	pdfcpu.ImportImagesFile(files, outFile, nil, nil)
 
 	fmt.Println("Done! ", outFile)
@@ -69,4 +77,61 @@ func parseImageURLs(content []byte) ([]string, error) {
 		urls = append(urls, u)
 	}
 	return urls, nil
+}
+
+func writeHeader(catalogID, outFilePath string) <-chan error {
+	ch := make(chan error, 1)
+	go func() {
+		header, err := createHeaderFile(catalogID)
+		if err != nil {
+			ch <- err
+			return
+		}
+
+		f, err := os.Create(outFilePath)
+		if err != nil {
+			ch <- fmt.Errorf("error creating file: %w", err)
+			return
+		}
+		defer f.Close()
+
+		ch <- formatHeaderJson(f, header)
+	}()
+	return ch
+}
+
+func formatHeaderJson(w io.Writer, header Header) error {
+	b := strings.Builder{}
+	b.WriteString("\n")
+	b.WriteString(header.Title)
+	b.WriteString("\n")
+	b.WriteString("Catalog ID: ")
+	b.WriteString(header.CatalogID)
+	b.WriteString("\n\n")
+	for _, p := range header.Properties {
+		b.WriteString(p.Key)
+		b.WriteString(" ")
+		b.WriteString(p.Value)
+		b.WriteString("\n")
+	}
+	b.WriteString("\nLinks:\n")
+	for _, l := range header.Links {
+		b.WriteString(l)
+		b.WriteString("\n")
+	}
+	s := b.String()
+
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.MoveTo(0, 10)
+	pdf.SetFont("Arial", "", 12)
+	pdf.SetLeftMargin(10)
+	pdf.SetRightMargin(10)
+	pdf.SetAutoPageBreak(true, 10)
+	pdf.MultiCell(0.0, 6, s, "", "L", false)
+	err := pdf.Output(w)
+	if err != nil {
+		return fmt.Errorf("error writing PDF: %w", err)
+	}
+	return nil
 }
