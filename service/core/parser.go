@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"encoding/json"
@@ -12,22 +12,22 @@ import (
 	pdfcpu "github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
-func parse(catalogID string) (string, error) {
+func Parse(catalogID string) (string, error) {
 	fmt.Println("Catalog ID:", catalogID)
 
 	resp, err := http.Get("https://colenda.library.upenn.edu/phalt/iiif/2/" + catalogID + "/manifest")
 	if err != nil {
-		return "", fmt.Errorf("Error getting manifest: %w", err)
+		return "", fmt.Errorf("error getting manifest: %w", err)
 	}
 	defer resp.Body.Close()
 	manifest, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("Error reading manifest: %w", err)
+		return "", fmt.Errorf("error reading manifest: %w", err)
 	}
 
 	imageURLs, err := parseImageURLs(manifest)
 	if err != nil {
-		return "", fmt.Errorf("Error parsing image URLs: %w", err)
+		return "", fmt.Errorf("error parsing image URLs: %w", err)
 	}
 	fmt.Println("Extracted images:", len(imageURLs))
 
@@ -37,7 +37,7 @@ func parse(catalogID string) (string, error) {
 
 	files, err := downloadImages(dataDir, imageURLs)
 	if err != nil {
-		return "", fmt.Errorf("Error downloading images: %w", err)
+		return "", fmt.Errorf("error downloading images: %w", err)
 	}
 
 	outFile := fmt.Sprintf("%s.pdf", catalogID)
@@ -48,7 +48,7 @@ func parse(catalogID string) (string, error) {
 }
 
 func parseImageURLs(content []byte) ([]string, error) {
-	var data JSONData
+	var data Manifest
 	err := json.Unmarshal(content, &data)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing JSON: %v", err)
@@ -58,7 +58,7 @@ func parseImageURLs(content []byte) ([]string, error) {
 	}
 	firstSequence := data.Sequences[0]
 	canvases := firstSequence.Canvases
-	jpegs := []string{}
+	urls := []string{}
 	for i, canvas := range canvases {
 		if len(canvas.Images) == 0 {
 			return nil, fmt.Errorf("there are no images in the canvas of index %d", i)
@@ -66,7 +66,7 @@ func parseImageURLs(content []byte) ([]string, error) {
 		firstImage := canvas.Images[0]
 		fmt.Printf("Resource ID: %s\n", firstImage.Resource.ID)
 		u := strings.Replace(firstImage.Resource.ID, "/full/!200,200/0/default.jpg", "/full/2000,/0/default.jpg", 1)
-		jpegs = append(jpegs, u)
+		urls = append(urls, u)
 	}
-	return jpegs, nil
+	return urls, nil
 }

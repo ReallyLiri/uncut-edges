@@ -1,4 +1,4 @@
-package main
+package core
 
 type Canvas struct {
 	Images []struct {
@@ -12,6 +12,6 @@ type Sequence struct {
 	Canvases []Canvas `json:"canvases"`
 }
 
-type JSONData struct {
+type Manifest struct {
 	Sequences []Sequence `json:"sequences"`
 }
