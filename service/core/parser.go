@@ -13,46 +13,54 @@ import (
 	pdfcpu "github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
-func Parse(catalogID string) (string, error) {
-	fmt.Println("Catalog ID:", catalogID)
-	outFile := fmt.Sprintf("%s.pdf", catalogID)
-
-	headerCh := writeHeader(catalogID, outFile)
-
-	resp, err := http.Get(fmt.Sprintf(manifestUrlFmt, catalogID))
+func ParseManifest(manifestUrl, outFile string, prepareationChan <-chan error) error {
+	resp, err := http.Get(manifestUrl)
 	if err != nil {
-		return "", fmt.Errorf("error getting manifest: %w", err)
+		return fmt.Errorf("error getting manifest: %w", err)
 	}
 	defer resp.Body.Close()
 	manifest, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("error reading manifest: %w", err)
+		return fmt.Errorf("error reading manifest: %w", err)
 	}
 
 	imageURLs, err := parseImageURLs(manifest)
 	if err != nil {
-		return "", fmt.Errorf("error parsing image URLs: %w", err)
+		return fmt.Errorf("error parsing image URLs: %w", err)
 	}
 	fmt.Println("Extracted images:", len(imageURLs))
 
-	dataDir := filepath.Join("data", catalogID)
+	dataDir := filepath.Join("data", strings.TrimSuffix(filepath.Base(outFile), filepath.Ext(outFile)))
 	defer os.RemoveAll(dataDir)
 	os.MkdirAll(dataDir, 0755)
 
 	files, err := downloadImages(dataDir, imageURLs)
 	if err != nil {
-		return "", fmt.Errorf("error downloading images: %w", err)
+		return fmt.Errorf("error downloading images: %w", err)
 	}
 
-	err = <-headerCh
-	if err != nil {
-		return "", err
+	if prepareationChan != nil {
+		err = <-prepareationChan
+		if err != nil {
+			return err
+		}
 	}
 
 	pdfcpu.ImportImagesFile(files, outFile, nil, nil)
 
 	fmt.Println("Done! ", outFile)
-	return outFile, nil
+	return nil
+}
+
+func ParsePenn(catalogID string) (string, error) {
+	// Example: https://colenda.library.upenn.edu/catalog/81431-p3hk28
+
+	fmt.Println("Catalog ID:", catalogID)
+	outFile := fmt.Sprintf("%s.pdf", catalogID)
+
+	headerCh := writeHeader(catalogID, outFile)
+
+	return outFile, ParseManifest(fmt.Sprintf(manifestUrlFmt, catalogID), outFile, headerCh)
 }
 
 func parseImageURLs(content []byte) ([]string, error) {

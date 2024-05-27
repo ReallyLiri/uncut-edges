@@ -3,3 +3,4 @@ data
 *.html
 .vscode
 .DS_Store
+.idea

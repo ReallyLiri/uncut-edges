@@ -18,10 +18,8 @@ func init() {
 }
 
 const (
-	usage = `Usage: go run main.go <serve/parse> <CatalogID>`
+	usage = `Usage: go run main.go <serve/parse> <ManifestURL>`
 )
-
-// Example: https://colenda.library.upenn.edu/catalog/81431-p3hk28
 
 func main() {
 	if len(os.Args) < 2 {
@@ -37,8 +35,9 @@ func main() {
 			fmt.Println(usage)
 			os.Exit(1)
 		}
-		catalogID := os.Args[2]
-		_, err := core.Parse(catalogID)
+		manifestURL := os.Args[2]
+		outFile := "out.pdf"
+		err := core.ParseManifest(manifestURL, outFile, nil)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
@@ -50,7 +49,8 @@ func main() {
 }
 
 func serve() {
-	http.HandleFunc(parseEndpoint, parseCatalogHandler)
+	http.HandleFunc(parseEndpoint, parseManifestHandler)
+	http.HandleFunc(parsePennEndpoint, parsePennHandler)
 
 	fmt.Printf("Server is listening on port %s...\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
