@@ -51,6 +51,7 @@ func main() {
 func serve() {
 	http.HandleFunc(parseEndpoint, parseManifestHandler)
 	http.HandleFunc(parsePennEndpoint, parsePennHandler)
+	http.HandleFunc(shakespeareEndpoint, parseShakespeareHandler)
 
 	fmt.Printf("Server is listening on port %s...\n", port)
 	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)

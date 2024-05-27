@@ -58,9 +58,29 @@ func ParsePenn(catalogID string) (string, error) {
 	fmt.Println("Catalog ID:", catalogID)
 	outFile := fmt.Sprintf("%s.pdf", catalogID)
 
-	headerCh := writeHeader(catalogID, outFile)
+	headerCh := writeHeader(outFile, func() (Header, error) {
+		return createPennHeader(catalogID)
+	})
 
-	return outFile, ParseManifest(fmt.Sprintf(manifestUrlFmt, catalogID), outFile, headerCh)
+	return outFile, ParseManifest(fmt.Sprintf(pennManifestUrlFmt, catalogID), outFile, headerCh)
+}
+
+func ParseShakespeare(catalogID string) (string, error) {
+	// Example: https://digitalcollections.folger.edu/bib244741-309974-lb41
+
+	fmt.Println("Catalog ID:", catalogID)
+	outFile := fmt.Sprintf("%s.pdf", catalogID)
+
+	header, err := createShakespearHeader(catalogID)
+	if err != nil {
+		return "", fmt.Errorf("error creating header: %w", err)
+	}
+
+	headerCh := writeHeader(outFile, func() (Header, error) {
+		return header, nil
+	})
+
+	return outFile, ParseManifest(header.ManifestURL, outFile, headerCh)
 }
 
 func parseImageURLs(content []byte) ([]string, error) {
@@ -87,10 +107,10 @@ func parseImageURLs(content []byte) ([]string, error) {
 	return urls, nil
 }
 
-func writeHeader(catalogID, outFilePath string) <-chan error {
+func writeHeader(outFilePath string, action func() (Header, error)) <-chan error {
 	ch := make(chan error, 1)
 	go func() {
-		header, err := createHeaderFile(catalogID)
+		header, err := action()
 		if err != nil {
 			ch <- err
 			return
@@ -122,13 +142,15 @@ func formatHeaderJson(w io.Writer, header Header) error {
 		b.WriteString(p.Value)
 		b.WriteString("\n")
 	}
-	b.WriteString("\nLinks:\n")
-	for _, l := range header.Links {
-		b.WriteString(l)
-		b.WriteString("\n")
+	if len(header.Links) > 0 {
+		b.WriteString("\nLinks:\n")
+		for _, l := range header.Links {
+			b.WriteString(l)
+			b.WriteString("\n")
+		}
 	}
-	s := b.String()
 
+	s := b.String()
 	pdf := gofpdf.New("P", "mm", "A4", "")
 	pdf.AddPage()
 	pdf.MoveTo(0, 10)

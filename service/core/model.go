@@ -22,8 +22,9 @@ type Property struct {
 }
 
 type Header struct {
-	CatalogID  string
-	Title      string
-	Properties []Property
-	Links      []string
+	CatalogID   string
+	Title       string
+	Properties  []Property
+	Links       []string
+	ManifestURL string
 }

@@ -51,6 +51,23 @@ func parsePennHandler(w http.ResponseWriter, r *http.Request) {
 	writeResponse(w, filePath)
 }
 
+func parseShakespeareHandler(w http.ResponseWriter, r *http.Request) {
+	catalogID := r.URL.Path[len(shakespeareEndpoint):]
+	if catalogID == "" {
+		http.Error(w, "Missing play parameter", http.StatusBadRequest)
+		return
+	}
+
+	filePath, err := core.ParseShakespeare(catalogID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Error parsing play: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer os.Remove(filePath)
+
+	writeResponse(w, filePath)
+}
+
 func writeResponse(w http.ResponseWriter, pdfFilePath string) {
 	f, err := os.Open(pdfFilePath)
 	if err != nil {
