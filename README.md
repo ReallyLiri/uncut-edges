@@ -2,6 +2,12 @@
 
 iiif to PDF tool , still WIP
 
+## WebApp
+
+Availble at [https://uncut-edges.netlify.app](https://uncut-edges.netlify.app)
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/21eab1bb-8b18-4059-8a40-b93ac78b4184/deploy-status)](https://app.netlify.com/sites/uncut-edges/deploys)
+
 ## API
 
 Public API available at `https://uncut-edges.onrender.com`
