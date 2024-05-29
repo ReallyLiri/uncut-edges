@@ -16,7 +16,7 @@ const (
 	shakespeareEndpoint = parseEndpoint + "shakespeare/"
 	vatlibEndpoint      = parseEndpoint + "vatlib/"
 
-	allowedDomains = "http://localhost:5173, https://uncut-edges.netlify.app"
+	allowedDomain = "https://uncut-edges.netlify.app" // "http://localhost:5173"
 )
 
 func parseManifestHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func writeResponse(w http.ResponseWriter, pdfFilePath string) {
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(pdfFilePath)))
 	w.Header().Set("Content-Type", "application/octet-stream")
-	w.Header().Set("Access-Control-Allow-Origin", allowedDomains)
+	w.Header().Set("Access-Control-Allow-Origin", allowedDomain)
 	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
 	w.Header().Set("Access-Control-Expose-Headers", "*")
 
