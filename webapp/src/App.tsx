@@ -8,9 +8,11 @@ import {
   ParserTypes,
 } from "./parser/parserType.ts";
 import { parseAsync } from "./parser/api.ts";
+import { Game } from "./game/Game.tsx";
 
 const Page = styled.div`
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
@@ -25,8 +27,15 @@ const Container = styled.div`
   gap: 1rem;
   justify-content: center;
   align-items: start;
-  height: 100vh;
+  height: fit-content;
   width: 25vw;
+  padding: 2rem;
+  border: 1px solid ${() => Theme.White};
+  border-radius: 0.5rem;
+`;
+
+const Title = styled.div`
+  font-weight: 600;
 `;
 
 const Row = styled.div`
@@ -36,7 +45,7 @@ const Row = styled.div`
   padding: 0.25rem 0;
 `;
 
-const Button = styled.div<{ disabled: boolean }>`
+const Button = styled.div<{ disabled?: boolean }>`
   background-color: ${() => Theme.White};
   color: ${() => Theme.Black};
   padding: 1rem;
@@ -47,12 +56,21 @@ const Button = styled.div<{ disabled: boolean }>`
   }
 `;
 
+const PlayLabel = styled.div`
+  padding-top: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.5;
+  text-align: start;
+  width: calc(25vw + 4rem);
+  cursor: pointer;
+`;
+
 const StyledInput = styled.input`
   background-color: ${() => Theme.White};
   color: ${() => Theme.Black};
   padding: 0.5rem;
   border-radius: 0.25rem;
-  width: 100%;
+  width: -webkit-fill-available;
   font-size: 1rem;
 `;
 
@@ -89,11 +107,13 @@ const ParserInput = ({
 function App() {
   const [value, setValue] = useState<string>();
   const [parserType, setParserType] = useState<ParserType>("manifest");
+  const [gameOn, setGameOn] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
   const dispatchParsing = async () => {
     try {
       setLoading(true);
+      setGameOn(true);
       await parseAsync(parserType, value!);
     } catch (e) {
       console.error(e);
@@ -102,9 +122,26 @@ function App() {
     }
   };
 
+  if (gameOn) {
+    return (
+      <Page>
+        <div>
+          {loading
+            ? "Working... This may take a few minutes. Why not play a game in the meantime?"
+            : "Parsing completed!"}
+        </div>
+        <Game />
+        {!loading && (
+          <Button onClick={() => setGameOn(false)}>Back to parser</Button>
+        )}
+      </Page>
+    );
+  }
+
   return (
     <Page>
       <Container>
+        <Title>IIIF Parser 📚</Title>
         <div onChange={(e) => setParserType((e.target as any).value)}>
           {ParserTypes.map((type) => (
             <Row key={type} onClick={() => setParserType(type)}>
@@ -125,6 +162,9 @@ function App() {
           </Button>
         )}
       </Container>
+      <PlayLabel onClick={() => setGameOn(true)}>
+        or are you just here to play?
+      </PlayLabel>
     </Page>
   );
 }
