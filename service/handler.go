@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/reallyliri/penn-scans-parser/core"
 )
@@ -76,7 +77,12 @@ func writeResponse(w http.ResponseWriter, pdfFilePath string) {
 	}
 	defer f.Close()
 
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(pdfFilePath)))
 	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Expose-Headers", "*")
+
 	_, err = io.Copy(w, f)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error streaming file: %v", err), http.StatusInternalServerError)

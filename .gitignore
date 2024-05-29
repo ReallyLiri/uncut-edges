@@ -1,7 +1,6 @@
 data
 *.pdf
-*.html
+service/*.html
 .vscode
 .DS_Store
-.idea
-service/__debug*
+**/__debug_bin*
