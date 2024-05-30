@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import { Theme } from "./theme.ts";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ParserPlaceholder,
   ParserTitle,
@@ -89,6 +89,13 @@ const StyledInput = styled.input`
   font-size: 1rem;
 `;
 
+const ErrorMessage = styled.div`
+  padding: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #9e3333;
+`;
+
 const TextInput = ({
   onChange,
   placeholder,
@@ -125,28 +132,43 @@ function App() {
   const [pageRange, setPageRange] = useState<string>("");
   const [gameOn, setGameOn] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>();
+  const [loadingDots, setLoadingDots] = useState(1);
 
   const dispatchParsing = async () => {
     try {
+      setError(undefined);
       setLoading(true);
       setGameOn(true);
       await parseAsync(parserType, value!, pageRange);
     } catch (e) {
       console.error(e);
+      setError((e as any)?.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!loading) {
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingDots((d) => (d + 1) % 3);
+    }, 500);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   if (gameOn) {
     return (
       <Page>
         <div>
           {loading
-            ? "Working... This may take a few minutes. Why not play a game in the meantime?"
+            ? `Working${Array(loadingDots + 2).join(".")} This may take a few minutes. Why not play a game in the meantime?`
             : "Parsing completed!"}
         </div>
         <Game />
+        {error && <ErrorMessage>Error: {error}</ErrorMessage>}
         {!loading && (
           <Button onClick={() => setGameOn(false)}>Back to parser</Button>
         )}
