@@ -34,6 +34,15 @@ const Container = styled.div`
   border-radius: 0.5rem;
 `;
 
+const MainTitle = styled.div`
+  font-size: 4rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  font-family: "Jaini", system-ui;
+  pointer-events: none;
+  user-select: none;
+`;
+
 const Title = styled.div`
   font-weight: 600;
 `;
@@ -43,6 +52,8 @@ const Row = styled.div`
   flex-direction: row;
   gap: 1rem;
   padding: 0.25rem 0;
+  align-items: center;
+  width: 100%;
 `;
 
 const Button = styled.div<{ disabled?: boolean }>`
@@ -51,15 +62,19 @@ const Button = styled.div<{ disabled?: boolean }>`
   padding: 1rem;
   border-radius: 0.25rem;
   cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
   &:hover {
     box-shadow: inset 0 0 0.5rem ${() => Theme.Black};
   }
 `;
 
-const PlayLabel = styled.div`
-  padding-top: 0.5rem;
+const Label = styled.div`
   font-size: 0.75rem;
   opacity: 0.5;
+`;
+
+const PlayLabel = styled(Label)`
+  padding-top: 0.5rem;
   text-align: start;
   width: calc(25vw + 4rem);
   cursor: pointer;
@@ -107,6 +122,7 @@ const ParserInput = ({
 function App() {
   const [value, setValue] = useState<string>();
   const [parserType, setParserType] = useState<ParserType>("manifest");
+  const [pageRange, setPageRange] = useState<string>("");
   const [gameOn, setGameOn] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -114,7 +130,7 @@ function App() {
     try {
       setLoading(true);
       setGameOn(true);
-      await parseAsync(parserType, value!);
+      await parseAsync(parserType, value!, pageRange);
     } catch (e) {
       console.error(e);
     } finally {
@@ -140,6 +156,7 @@ function App() {
 
   return (
     <Page>
+      <MainTitle>Uncut Edges</MainTitle>
       <Container>
         <Title>IIIF Parser 📚</Title>
         <div onChange={(e) => setParserType((e.target as any).value)}>
@@ -154,6 +171,12 @@ function App() {
           placeholder={ParserPlaceholder[parserType]}
           onChange={setValue}
         />
+        <Row>
+          <div>
+            <Label>Optional</Label> Pages:
+          </div>
+          <TextInput placeholder="i.e 1-3, 5, 7" onChange={setPageRange} />
+        </Row>
         {loading ? (
           <div>Working...</div>
         ) : (

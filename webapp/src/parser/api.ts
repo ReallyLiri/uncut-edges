@@ -18,8 +18,15 @@ const ParserRoute: Record<ParserType, string> = {
   shakespeare: "/parse/shakespeare/",
 };
 
-export const parseAsync = (type: ParserType, input: string): Promise<void> => {
-  const url = `${API_URL}${ParserRoute[type]}${encodeURIComponent(input)}`;
+export const parseAsync = (
+  type: ParserType,
+  input: string,
+  pageRange: string | undefined,
+): Promise<void> => {
+  let url = `${API_URL}${ParserRoute[type]}${encodeURIComponent(input)}`;
+  if (pageRange) {
+    url += `?pages=${encodeURIComponent(pageRange)}`;
+  }
   console.log("calling parser", url);
   return new Promise<void>((resolve, reject) => {
     fetch(url)

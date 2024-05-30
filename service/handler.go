@@ -135,6 +135,7 @@ func getPages(r *http.Request) (core.PagePredicate, error) {
 
 func parsePageRanges(pageRanges string) ([]core.Range, error) {
 	var ranges []core.Range
+	pageRanges = strings.ReplaceAll(pageRanges, " ", "")
 	parts := strings.Split(pageRanges, ",")
 
 	for _, part := range parts {
