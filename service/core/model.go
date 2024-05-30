@@ -28,3 +28,8 @@ type Header struct {
 	Links       []string
 	ManifestURL string
 }
+
+type Range struct {
+	Start int
+	End   int
+}

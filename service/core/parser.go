@@ -13,7 +13,9 @@ import (
 	pdfcpu "github.com/pdfcpu/pdfcpu/pkg/api"
 )
 
-func ParseManifest(manifestUrl, outFile string, prepareationChan <-chan error) error {
+type PagePredicate = func(int) bool
+
+func ParseManifest(manifestUrl, outFile string, prepareationChan <-chan error, pages PagePredicate) error {
 	resp, err := http.Get(manifestUrl)
 	if err != nil {
 		return fmt.Errorf("error getting manifest: %w", err)
@@ -24,7 +26,7 @@ func ParseManifest(manifestUrl, outFile string, prepareationChan <-chan error) e
 		return fmt.Errorf("error reading manifest: %w", err)
 	}
 
-	imageURLs, err := parseImageURLs(manifest)
+	imageURLs, err := parseImageURLs(manifest, pages)
 	if err != nil {
 		return fmt.Errorf("error parsing image URLs: %w", err)
 	}
@@ -52,7 +54,7 @@ func ParseManifest(manifestUrl, outFile string, prepareationChan <-chan error) e
 	return nil
 }
 
-func ParsePenn(catalogID string) (string, error) {
+func ParsePenn(catalogID string, pages PagePredicate) (string, error) {
 	// Example: https://colenda.library.upenn.edu/catalog/81431-p3hk28
 
 	fmt.Println("Catalog ID:", catalogID)
@@ -62,10 +64,10 @@ func ParsePenn(catalogID string) (string, error) {
 		return createPennHeader(catalogID)
 	})
 
-	return outFile, ParseManifest(fmt.Sprintf(pennManifestUrlFmt, catalogID), outFile, headerCh)
+	return outFile, ParseManifest(fmt.Sprintf(pennManifestUrlFmt, catalogID), outFile, headerCh, pages)
 }
 
-func ParseShakespeare(catalogID string) (string, error) {
+func ParseShakespeare(catalogID string, pages PagePredicate) (string, error) {
 	// Example: https://digitalcollections.folger.edu/bib244741-309974-lb41
 
 	fmt.Println("Catalog ID:", catalogID)
@@ -80,10 +82,10 @@ func ParseShakespeare(catalogID string) (string, error) {
 		return header, nil
 	})
 
-	return outFile, ParseManifest(header.ManifestURL, outFile, headerCh)
+	return outFile, ParseManifest(header.ManifestURL, outFile, headerCh, pages)
 }
 
-func parseImageURLs(content []byte) ([]string, error) {
+func parseImageURLs(content []byte, pages PagePredicate) ([]string, error) {
 	var data Manifest
 	err := json.Unmarshal(content, &data)
 	if err != nil {
@@ -96,6 +98,9 @@ func parseImageURLs(content []byte) ([]string, error) {
 	canvases := firstSequence.Canvases
 	urls := []string{}
 	for i, canvas := range canvases {
+		if pages != nil && !pages(i) {
+			continue
+		}
 		if len(canvas.Images) == 0 {
 			return nil, fmt.Errorf("there are no images in the canvas of index %d", i)
 		}

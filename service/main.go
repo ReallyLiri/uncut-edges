@@ -37,7 +37,7 @@ func main() {
 		}
 		manifestURL := os.Args[2]
 		outFile := "out.pdf"
-		err := core.ParseManifest(manifestURL, outFile, nil)
+		err := core.ParseManifest(manifestURL, outFile, nil, nil)
 		if err != nil {
 			fmt.Println("Error:", err)
 			os.Exit(1)
