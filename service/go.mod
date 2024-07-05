@@ -7,7 +7,10 @@ require (
 	github.com/pdfcpu/pdfcpu v0.8.0
 )
 
-require github.com/andybalholm/cascadia v1.3.2 // indirect
+require (
+	github.com/andybalholm/cascadia v1.3.2 // indirect
+	github.com/samber/lo v1.44.0 // indirect
+)
 
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
@@ -18,6 +21,6 @@ require (
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/image v0.15.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )

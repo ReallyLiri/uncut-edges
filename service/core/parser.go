@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/samber/lo"
 	"io"
 	"net/http"
 	"os"
@@ -48,7 +49,16 @@ func ParseManifest(manifestUrl, outFile string, prepareationChan <-chan error, p
 		}
 	}
 
-	pdfcpu.ImportImagesFile(files, outFile, nil, nil)
+	files = lo.Filter(files, func(f string, _ int) bool {
+		return len(f) > 0
+	})
+	if len(files) == 0 {
+		return fmt.Errorf("no images downloaded")
+	}
+	err = pdfcpu.ImportImagesFile(files, outFile, nil, nil)
+	if err != nil {
+		return fmt.Errorf("error creating PDF: %w", err)
+	}
 
 	fmt.Println("Done! ", outFile)
 	return nil
